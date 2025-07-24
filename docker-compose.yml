@@ -1,0 +1,73 @@
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: ldap-server
+    hostname: ldap.example.com
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      # Basic LDAP configuration
+      LDAP_ORGANISATION: "Example Corp"
+      LDAP_DOMAIN: "example.local"
+      LDAP_BASE_DN: "dc=example,dc=local"
+      LDAP_ADMIN_PASSWORD: "admin123"
+      
+      # Enable TLS
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_DH_PARAM_FILENAME: "dhparam.pem"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+      LDAP_TLS_ENFORCE: "false"
+      LDAP_TLS_VERIFY_CLIENT: "never"
+      
+      # Additional settings
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
+      LDAP_SEED_INTERNAL_LDIF_PATH: "/container/service/slapd/assets/config/bootstrap/ldif/custom"
+      
+    volumes:
+      - ./ldap/data:/var/lib/ldap
+      - ./ldap/config:/etc/ldap/slapd.d
+      - ./certs:/container/service/slapd/assets/certs:ro
+      - ./01-structure.ldif:/ldif/01-structure.ldif:ro
+      - ./load-structure.sh:/load-structure.sh:ro
+    command: --copy-service
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost", "-b", "dc=example,dc=local", "-D", "cn=admin,dc=example,dc=local", "-w", "admin123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ldap-network
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: phpldapadmin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8080:80"
+    depends_on:
+      - openldap
+    networks:
+      - ldap-network
+
+  ldap-loader:
+    image: alpine:latest
+    container_name: ldap-loader
+    volumes:
+      - ./01-structure.ldif:/ldif/01-structure.ldif:ro
+      - ./load-structure.sh:/load-structure.sh:ro
+    command: sh -c "apk add --no-cache openldap-clients bash && bash /load-structure.sh"
+    depends_on:
+      openldap:
+        condition: service_healthy
+    networks:
+      - ldap-network
+    restart: "no"
+
+networks:
+  ldap-network:
+    driver: bridge

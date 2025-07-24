@@ -1,0 +1,65 @@
+# 01-structure.ldif
+# This file creates the organizational structure matching your customer's setup
+
+# Create root organizational units
+dn: ou=User_Accounts,dc=example,dc=local
+objectClass: organizationalUnit
+ou: User_Accounts
+
+dn: ou=Service_Accounts,ou=User_Accounts,dc=example,dc=local
+objectClass: organizationalUnit
+ou: Service_Accounts
+
+# Create the service account for LDAP binding
+dn: cn=svc_elk_ldap,ou=Service_Accounts,ou=User_Accounts,dc=example,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: svc_elk_ldap
+sn: Service Account
+givenName: ELK LDAP
+displayName: ELK LDAP Service Account
+uid: svc_elk_ldap
+mail: svc_elk_ldap@example.local
+userPassword: ServiceAccount123!
+
+# Create some test users
+dn: cn=John Doe,ou=User_Accounts,dc=example,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: John Doe
+sn: Doe
+givenName: John
+displayName: John Doe
+uid: jdoe
+mail: john.doe@example.local
+userPassword: UserPassword123!
+
+dn: cn=Jane Smith,ou=User_Accounts,dc=example,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Jane Smith
+sn: Smith
+givenName: Jane
+displayName: Jane Smith
+uid: jsmith
+mail: jane.smith@example.local
+userPassword: UserPassword123!
+
+dn: cn=Test User,ou=User_Accounts,dc=example,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Test User
+sn: User
+givenName: Test
+displayName: Test User
+uid: testuser
+mail: test.user@example.local
+userPassword: TestPassword123!
